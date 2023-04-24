@@ -6,17 +6,25 @@ const { InvariantError } = require('../../exceptions/InvariantError');
 class ReportsService {
   async addReport(mongo, payload) {
     const _id = `report-${nanoid(16)}`;
-    const dateFormat = 'HH:mm DD-MM-YYYY';
-    const timeStart = moment(payload.time_start, dateFormat).toDate();
-    const timeEnd = moment(payload.time_end, dateFormat).toDate();
+    const timeStart = moment(payload.time_start).toDate();
+
+    const statusCheckIn = await this.verifyCheckIn({
+      mongo,
+      userId: payload.user_id,
+      timeStart: moment(payload.time_start).startOf('day').format(),
+    });
+
+    if (statusCheckIn.length) {
+      throw new InvariantError('Waktu kehadiran kerja hari ini sudah direkam');
+    }
 
     const report = {
       _id,
       user_id: payload.user_id,
-      category: payload.category_id,
-      report: payload.report,
+      category_id: payload.category_id,
       time_start: timeStart,
-      time_end: timeEnd,
+      time_end: null,
+      report: null,
     };
 
     const result = await mongo.db.collection('reports')
@@ -27,6 +35,60 @@ class ReportsService {
     }
 
     return result.insertedId;
+  }
+
+  async editReport(mongo, payload) {
+    const timeStart = moment().startOf('day').format();
+    const statusReport = await this.verifyCheckIn({
+      mongo,
+      timeStart,
+      userId: payload.user_id,
+    });
+
+    if (!statusReport.length) {
+      throw new InvariantError('Waktu kehadiran kerja hari ini belum terekam');
+    }
+
+    if (statusReport[0].time_end || statusReport[0].report) {
+      throw new InvariantError('Laporan kerja yang sudah dikirim tidak dapat diubah');
+    }
+
+    const checkOutPayload = {
+      time_end: payload.time_end,
+      report: payload.report,
+    };
+
+    const result = await mongo.db.collection('reports').updateOne({
+      $and: [
+        { user_id: payload.user_id },
+        {
+          time_start: {
+            $gte: moment(timeStart).toDate(),
+            $lt: moment(timeStart).add(1, 'd').toDate(),
+          },
+        },
+      ],
+    }, { $set: checkOutPayload });
+
+    if (!result.acknowledged) {
+      throw new InvariantError('Report gagal ditambahkan');
+    }
+  }
+
+  async verifyCheckIn({ mongo, userId, timeStart }) {
+    const result = await mongo.db.collection('reports').find({
+      $and: [
+        { user_id: userId },
+        {
+          time_start: {
+            $gte: moment(timeStart).toDate(),
+            $lt: moment(timeStart).add(1, 'd').toDate(),
+          },
+        },
+      ],
+    }).toArray();
+
+    return result;
   }
 
   async getAllReports({ mongo, userId, payload }) {
@@ -45,7 +107,7 @@ class ReportsService {
             { user_id: userId },
             { time_start: { $gte: timeStart, $lte: timeEnd } },
           ],
-        }).toArray();
+        }).sort({ time_start: -1 }).toArray();
 
       return result;
     }
@@ -61,7 +123,7 @@ class ReportsService {
             { user_id: userIdQuery },
             { time_start: { $gte: timeStart, $lte: timeEnd } },
           ],
-        }).toArray();
+        }).sort({ time_start: -1 }).toArray();
 
       return result;
     }
@@ -69,10 +131,19 @@ class ReportsService {
     // all user reports
     if (!userIdQuery && !statusDate) {
       const result = await mongo.db.collection('reports')
-        .find({ user_id: userId }).toArray();
+        .find({ user_id: userId }).sort({ time_start: -1 }).toArray();
 
       return result;
     }
+  }
+
+  async getLastReport(mongo, userId) {
+    const result = await mongo.db.collection('reports').find({ user_id: userId })
+      .sort({ time_start: -1 })
+      .limit(1)
+      .toArray();
+
+    return result;
   }
 
   async getReportsBetweenDates(mongo, payload) {

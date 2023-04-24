@@ -1,11 +1,14 @@
 const Joi = require('joi');
 
-const ReportPayloadSchema = Joi.object({
+const PostReportPayloadSchema = Joi.object({
   user_id: Joi.string().required(),
   category_id: Joi.string().required(),
   time_start: Joi.string().required(),
+});
+
+const PutReportPayloadSchema = Joi.object({
   time_end: Joi.string().required(),
   report: Joi.string().required(),
 });
 
-module.exports = { ReportPayloadSchema };
+module.exports = { PostReportPayloadSchema, PutReportPayloadSchema };

@@ -8,6 +8,14 @@ const routes = (handler) => [
     },
   },
   {
+    method: 'PUT',
+    path: '/reports',
+    handler: handler.putReportHandler,
+    options: {
+      auth: 'lakerja_jwt',
+    },
+  },
+  {
     method: 'GET',
     path: '/reports',
     handler: handler.getAllReportsHandler,
