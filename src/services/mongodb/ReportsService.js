@@ -1,12 +1,12 @@
 /* eslint-disable import/no-extraneous-dependencies */
-const moment = require('moment');
+const moment = require('moment-timezone');
 const { nanoid } = require('nanoid');
 const { InvariantError } = require('../../exceptions/InvariantError');
 
 class ReportsService {
   async addReport(mongo, payload) {
     const _id = `report-${nanoid(16)}`;
-    const timeStart = moment(payload.time_start).toDate();
+    const timeStart = moment(payload.time_start).tz('Asia/Jakarta').toDate();
 
     const statusCheckIn = await this.verifyCheckIn({
       mongo,
@@ -22,9 +22,10 @@ class ReportsService {
       _id,
       user_id: payload.user_id,
       category_id: payload.category_id,
+      category_name: payload.category_name,
       time_start: timeStart,
       time_end: null,
-      report: null,
+      report: payload.report ? payload.report : null,
     };
 
     const result = await mongo.db.collection('reports')
@@ -38,7 +39,7 @@ class ReportsService {
   }
 
   async editReport(mongo, payload) {
-    const timeStart = moment().startOf('day').format();
+    const timeStart = moment().tz('Asia/Jakarta').startOf('day').format();
     const statusReport = await this.verifyCheckIn({
       mongo,
       timeStart,
@@ -50,11 +51,11 @@ class ReportsService {
     }
 
     if (statusReport[0].time_end || statusReport[0].report) {
-      throw new InvariantError('Laporan kerja yang sudah dikirim tidak dapat diubah');
+      throw new InvariantError('Anda sudah melakukan check out untuk hari ini');
     }
 
     const checkOutPayload = {
-      time_end: payload.time_end,
+      time_end: moment(payload.time_end).tz('Asia/Jakarta').toDate(),
       report: payload.report,
     };
 

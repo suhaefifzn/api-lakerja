@@ -63,6 +63,9 @@ class UsersHandler {
     const {
       newUsername, newFullname, newEmail, newPhone, password,
     } = request.payload;
+
+    helpers.user.account.containsWhitespace('Username', newUsername);
+
     const payload = {
       password,
       username: newUsername,
@@ -88,7 +91,7 @@ class UsersHandler {
     const { get } = request.query;
 
     if (get === 'all') {
-      await helpers.user.isAdmin(request, authUserId);
+      await helpers.user.notEmployee(request, authUserId);
 
       const users = await this._service.getAllUsers(request);
       return h.response({

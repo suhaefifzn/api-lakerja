@@ -47,7 +47,7 @@ module.exports = {
         const status = /\s/.test(value);
 
         if (status) {
-          throw new InvariantError(`${title} tidak boleh mengandung whitespace`);
+          throw new InvariantError(`${title} cannot contain whitespace`);
         }
       },
     },

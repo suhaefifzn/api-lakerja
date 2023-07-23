@@ -28,6 +28,8 @@ class CategoriesService {
     if (!result) {
       throw new InvariantError('Id category tidak ditemukan');
     }
+
+    return result;
   }
 }
 

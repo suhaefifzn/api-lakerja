@@ -1,4 +1,5 @@
 const autoBind = require('auto-bind');
+const helpers = require('../../utils/helpers');
 
 class RolesHandler {
   constructor({ rolesService, rolesValidator, usersService }) {
@@ -27,7 +28,7 @@ class RolesHandler {
     const { id: userId } = request.auth.credentials;
     const { mongo } = request;
 
-    await this._usersService.verifyUserId(request, userId);
+    await helpers.user.isAdmin(request, userId);
 
     const roles = await this._rolesService.getAllRoles(mongo);
 

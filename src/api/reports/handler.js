@@ -24,7 +24,10 @@ class ReportsHandler {
     };
 
     this._reportsValidator.validatePostReportPayload(payload);
-    await this._categoriesService.verifyCategoryId(request.mongo, payload.category_id);
+    const category = await this._categoriesService
+      .verifyCategoryId(request.mongo, payload.category_id);
+
+    payload.category_name = category.name;
 
     const reportId = await this._reportsService.addReport(request.mongo, payload);
 

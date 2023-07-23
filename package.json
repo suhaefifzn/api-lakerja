@@ -24,7 +24,7 @@
     "hapi-mongodb": "^10.0.3",
     "joi": "^17.9.1",
     "moment": "^2.29.4",
-    "nanoid": "^3.1.20",
-    "redis": "^4.6.5"
+    "moment-timezone": "^0.5.43",
+    "nanoid": "^3.1.20"
   }
 }
