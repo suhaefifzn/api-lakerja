@@ -1,7 +1,7 @@
 module.exports = {
   app: {
     host: `${process.env.APP_HOST}`,
-    port: `${process.env.APP_PORT}`,
+    port: `${process.env.APP_PORT ? process.env.APP_PORT : process.env.PORT}`,
   },
   db: {
     client: `${process.env.MONGO_URL}/${process.env.MONGO_DB}`,
